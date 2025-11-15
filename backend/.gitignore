@@ -1,0 +1,12 @@
+# IDE
+.idea/
+
+# Env files
+.env
+
+# Logs
+*.log
+
+# Maven/Gradle build folders
+target/
+build/
