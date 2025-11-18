@@ -15,3 +15,7 @@ services:
     ports:
       - "2181:2181"
 
+  discovery-service:
+    build: ./discovery-service
+    ports:
+      - "8761:8761"
