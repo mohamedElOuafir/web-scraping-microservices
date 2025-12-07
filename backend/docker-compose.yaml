@@ -1,21 +1,69 @@
 services:
 
+
   kafka:
     image: confluentinc/cp-kafka:7.4.0
+    container_name: backend-kafka
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,PLAINTEXT_HOST://0.0.0.0:29092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://backend-kafka:9092,PLAINTEXT_HOST://localhost:29092
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
     ports:
       - "9092:9092"
+      - "29092:29092"
     depends_on:
       - zookeeper
+    networks:
+      - web-scraping-micro-network
+
 
   zookeeper:
     image: confluentinc/cp-zookeeper:7.4.0
+    container_name: backend-zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
     ports:
       - "2181:2181"
+    networks:
+      - web-scraping-micro-network
+
+
+  mysql:
+    container_name: backend-mysql
+    image: mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: admin
+    ports:
+      - "3306:3306"
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
+      timeout: 20s
+      retries: 10
+      start_period: 30s
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - web-scraping-micro-network
+
 
   discovery-service:
     build: ./discovery-service
+    container_name: backend-discovery-service
     ports:
       - "8761:8761"
+    networks:
+      - web-scraping-micro-network
+
+
+volumes:
+  mysql_data:
+    driver: local
+
+networks:
+  web-scraping-micro-network:
+    driver: bridge

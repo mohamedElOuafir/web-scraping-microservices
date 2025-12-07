@@ -23,10 +23,16 @@
         <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <lombok.version>1.18.30</lombok.version>
+        <jackson.version>2.17.0</jackson.version>
     </properties>
+
 
     <modules>
         <module>discovery-service</module>
+        <module>auth-service</module>
+        <module>api-gateway-service</module>
+        <module>scrap-service</module>
+        <module>article-service</module>
     </modules>
 
     <dependencyManagement>
@@ -52,6 +58,15 @@
                 <artifactId>mapstruct</artifactId>
                 <version>${mapstruct.version}</version>
             </dependency>
+
+            <dependency>
+                <groupId>com.fasterxml.jackson</groupId>
+                <artifactId>jackson-bom</artifactId>
+                <version>${jackson.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
         </dependencies>
     </dependencyManagement>
 
