@@ -1,6 +1,7 @@
 package com.example.scrapservice.config;
 
 import com.example.scrapservice.dto.ArticleDto;
+import com.example.scrapservice.dto.BookDto;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -10,8 +11,15 @@ import org.springframework.kafka.core.ProducerFactory;
 public class KafkaConfig {
 
     @Bean
-    public KafkaTemplate<String, ArticleDto> kafkaTemplate(ProducerFactory<String, ArticleDto> producerFactory) {
+    public KafkaTemplate<String, ArticleDto> kafkaTemplateArticle(ProducerFactory<String, ArticleDto> producerFactory) {
         return new KafkaTemplate<>(producerFactory);
     }
+
+    @Bean
+    public KafkaTemplate<String, BookDto> kafkaTemplateBook(ProducerFactory<String, BookDto> producerFactory) {
+        return new KafkaTemplate<>(producerFactory);
+    }
+
+
 
 }

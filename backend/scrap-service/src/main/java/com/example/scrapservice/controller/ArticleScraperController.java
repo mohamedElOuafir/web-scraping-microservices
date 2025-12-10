@@ -2,7 +2,7 @@ package com.example.scrapservice.controller;
 
 
 import com.example.scrapservice.dto.ArticleDto;
-import com.example.scrapservice.service.ArticlesScraperService;
+import com.example.scrapservice.service.ScrapService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -15,15 +15,15 @@ import java.util.Map;
 @RequestMapping("/articles")
 public class ArticleScraperController {
 
-    private final ArticlesScraperService articlesScraperService;
+    private final ScrapService scrapService;
 
-    public ArticleScraperController(ArticlesScraperService articlesScraperService) {
-        this.articlesScraperService = articlesScraperService;
+    public ArticleScraperController(ScrapService scrapService) {
+        this.scrapService = scrapService;
     }
 
     @GetMapping("/v2")
     public ResponseEntity<?> getArticles() {
-        List<ArticleDto> articles = articlesScraperService.getArticles();
+        List<ArticleDto> articles = scrapService.getArticles();
 
         return ResponseEntity.ok().body(Map.of("articles", articles));
     }

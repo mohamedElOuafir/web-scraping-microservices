@@ -10,6 +10,7 @@ spring:
           predicates:
             - Path=/auth/**
 
+
 eureka:
   client:
     register-with-eureka: true

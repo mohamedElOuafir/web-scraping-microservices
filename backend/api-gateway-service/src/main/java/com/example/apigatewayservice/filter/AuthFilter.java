@@ -43,6 +43,7 @@ public class AuthFilter implements WebFilter {
             return unauthorized(exchange);
         }
 
+
         String token = authHeader.substring(7);
 
         if(!jwtService.validate(token)){

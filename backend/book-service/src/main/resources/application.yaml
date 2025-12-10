@@ -1,0 +1,30 @@
+spring:
+  application:
+    name: book-service
+
+  data:
+    mongodb:
+      host: localhost
+      port: 27017
+      database: bookCollection
+      username: root
+      password: admin
+      authentication-database: admin
+
+  kafka:
+    bootstrap-servers: localhost:29092
+    consumer:
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "*"
+        spring.json.value.default.type: "com.example.bookservice.dto.BookDto"
+        spring.json.use.type.headers: false
+      group-id: book-group
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka
+server:
+  port: 8084
