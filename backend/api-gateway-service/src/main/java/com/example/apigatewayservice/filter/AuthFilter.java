@@ -2,7 +2,9 @@ package com.example.apigatewayservice.filter;
 
 import com.example.apigatewayservice.service.JwtService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.WebFilter;
@@ -30,6 +32,11 @@ public class AuthFilter implements WebFilter {
     @Override
     @NonNull
     public Mono<Void> filter(ServerWebExchange exchange, @NonNull WebFilterChain chain){
+
+        if(exchange.getRequest().getMethod() == HttpMethod.OPTIONS){
+            return chain.filter(exchange);
+        }
+
         String authHeader = exchange.getRequest().getHeaders().getFirst("Authorization");
         String path = exchange.getRequest().getPath().value();
 
@@ -38,7 +45,6 @@ public class AuthFilter implements WebFilter {
             return chain.filter(exchange);
         }
 
-
         if(authHeader == null || !authHeader.startsWith("Bearer ")) {
             return unauthorized(exchange);
         }
@@ -46,19 +52,20 @@ public class AuthFilter implements WebFilter {
 
         String token = authHeader.substring(7);
 
+
         if(!jwtService.validate(token)){
             return unauthorized(exchange);
         }
 
-        String username = jwtService.getUsernameFromToken(token);
+        String idUser = jwtService.getIdUserFromToken(token);
 
-        exchange.mutate().request(
-                exchange.getRequest().mutate()
-                        .header("Username", username)
-                        .build()
-        );
+        ServerHttpRequest request = exchange.getRequest().mutate()
+                .header("User-Id", idUser)
+                .build();
 
-        return chain.filter(exchange);
+        ServerWebExchange muteExchange = exchange.mutate().request(request).build();
+
+        return chain.filter(muteExchange);
     }
 
 

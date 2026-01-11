@@ -1,5 +1,6 @@
 package com.example.apigatewayservice.service;
 
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.stereotype.Component;
@@ -24,12 +25,13 @@ public class JwtService {
         }
     }
 
-    public String getUsernameFromToken(String token) {
-        return Jwts.parser()
+    public String getIdUserFromToken(String token) {
+        Claims claims =  Jwts.parser()
                 .setSigningKey(Keys.hmacShaKeyFor(secretKey.getBytes()))
                 .build()
                 .parseClaimsJws(token)
-                .getBody()
-                .getSubject();
+                .getBody();
+
+        return claims.getSubject();
     }
 }

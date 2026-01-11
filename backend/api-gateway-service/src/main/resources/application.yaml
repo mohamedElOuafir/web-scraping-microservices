@@ -10,13 +10,18 @@ spring:
           predicates:
             - Path=/auth/**
 
+        - id: article-service
+          uri: lb://article-service
+          predicates:
+            - Path=/article/**
+
 
 eureka:
   client:
     register-with-eureka: true
     fetch-registry: true
     service-url:
-      defaultZone: "http://discovery-service:8761/eureka"
+      defaultZone: "http://localhost:8761/eureka"
 
 
 server:

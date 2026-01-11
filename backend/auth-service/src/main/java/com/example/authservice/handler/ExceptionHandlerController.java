@@ -17,7 +17,10 @@ public class ExceptionHandlerController {
     @ExceptionHandler(UserAlreadyExistsException.class)
     public ResponseEntity<?> handleUserAlreadyExistsException(UserAlreadyExistsException e) {
         return ResponseEntity.badRequest().body(
-                Map.of("message", e.getMessage())
+                Map.of(
+                        "registered", false,
+                        "message", e.getMessage()
+                )
         );
     }
 
@@ -25,7 +28,10 @@ public class ExceptionHandlerController {
     @ExceptionHandler(UserNotExistsException.class)
     public ResponseEntity<?> handleUserNotExistsException(UserNotExistsException e) {
         return ResponseEntity.badRequest().body(
-                Map.of("message", e.getMessage())
+                Map.of(
+                        "deleted", false,
+                        "message", e.getMessage()
+                )
         );
     }
 }

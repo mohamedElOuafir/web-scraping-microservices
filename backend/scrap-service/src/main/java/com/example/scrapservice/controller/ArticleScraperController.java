@@ -21,7 +21,7 @@ public class ArticleScraperController {
         this.scrapService = scrapService;
     }
 
-    @GetMapping("/v2")
+    @GetMapping("/all")
     public ResponseEntity<?> getArticles() {
         List<ArticleDto> articles = scrapService.getArticles();
 

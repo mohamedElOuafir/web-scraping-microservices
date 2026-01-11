@@ -2,6 +2,7 @@ package com.example.authservice.service;
 
 import com.example.authservice.dto.LoginResponse;
 import com.example.authservice.dto.UserCredential;
+import com.example.authservice.dto.UserInfo;
 import com.example.authservice.entity.User;
 import com.example.authservice.exceptions.UserAlreadyExistsException;
 import com.example.authservice.exceptions.UserNotExistsException;
@@ -32,11 +33,14 @@ public class AuthService {
 
             if (jwtService.getPasswordEncoder().matches(userCredential.getPassword(), currentUser.getPassword())) {
 
+                UserInfo userInfo = new UserInfo();
+                userInfo.setEmail(currentUser.getEmail());
+                userInfo.setUsername(currentUser.getUsername());
+                userInfo.setIdUser(currentUser.getId());
+
                 return Optional.of(new LoginResponse(
-                        jwtService.generateToken(currentUser),
-                        currentUser.getId(),
-                        currentUser.getUsername(),
-                        currentUser.getEmail()
+                        jwtService.generateToken(userInfo),
+                        userInfo
                 ));
             }
         }
@@ -55,11 +59,14 @@ public class AuthService {
 
         User savedUser = authRepository.save(user);
 
+        UserInfo userInfo = new UserInfo();
+        userInfo.setEmail(savedUser.getEmail());
+        userInfo.setUsername(savedUser.getUsername());
+        userInfo.setIdUser(savedUser.getId());
+
         return new LoginResponse(
-                jwtService.generateToken(savedUser),
-                savedUser.getId(),
-                savedUser.getUsername(),
-                savedUser.getEmail()
+            jwtService.generateToken(userInfo),
+            userInfo
         );
     }
 

@@ -1,34 +1,40 @@
 package com.example.scrapservice.service;
 
-import com.example.scrapservice.dto.ArticleDto;
-import com.example.scrapservice.dto.BookDto;
+import com.example.scrapservice.dto.*;
+import com.example.scrapservice.enums.Categories;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+
+import java.sql.Date;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 
 @Service
 public class ScrapService {
 
-    private final Integer maxBooksBySubject = 3;
     private final RestTemplate restTemplate;
     private final ObjectMapper mapper;
     private final KafkaTemplate<String, ArticleDto> kafkaTemplateArticle;
-    private final KafkaTemplate<String, BookDto> kafkaTemplateBook;
     private final String articleUrl = System.getenv("ARTICLES_URL");
-    private final String bookUrl = System.getenv("BOOKS_URL");
 
-    public ScrapService(RestTemplate restTemplate, ObjectMapper mapper, KafkaTemplate<String, ArticleDto> kafkaTemplateArticle, KafkaTemplate<String, BookDto> kafkaTemplateBook) {
+    public ScrapService(
+            RestTemplate restTemplate,
+            ObjectMapper mapper,
+            KafkaTemplate<String, ArticleDto> kafkaTemplateArticle
+            ) {
         this.restTemplate = restTemplate;
         this.mapper = mapper;
         this.kafkaTemplateArticle = kafkaTemplateArticle;
-        this.kafkaTemplateBook = kafkaTemplateBook;
     }
 
 
@@ -37,88 +43,64 @@ public class ScrapService {
         List<ArticleDto> articles = new ArrayList<>();
 
         try {
-            String response = restTemplate.getForObject(articleUrl, String.class);
+            for(Categories c: Categories.values()){
+                String finalArticleUrl = articleUrl + "&q=" + c.toString();
+                String response =  restTemplate.getForObject(finalArticleUrl, String.class);
 
-            JsonNode root = mapper.readTree(response);
-            JsonNode articlesResult = root.path("results");
+                JsonNode root = mapper.readTree(response);
+                JsonNode articlesResult = root.path("news_results");
 
-            for (JsonNode currentArticle:articlesResult){
+                CategoryDto categoryDto = new CategoryDto(c.toString());
 
-                ArticleDto newArticle = new ArticleDto(
-                        currentArticle.path("title").asText(),
-                        currentArticle.path("authors").get(0).path("name").asText(),
-                        currentArticle.path("image_url").asText(),
-                        currentArticle.path("url").asText(),
-                        currentArticle.path("news_site").asText(),
-                        currentArticle.path("summary").asText(),
-                        currentArticle.path("published_at").asText()
-                );
 
-                kafkaTemplateArticle.send("article-topic", newArticle);
-                articles.add(newArticle);
+                for (JsonNode currentArticle:articlesResult) {
+                    JsonNode source =  currentArticle.path("source");
+
+                    if(source.isMissingNode() || source.isNull() || source.path("authors").isMissingNode())
+                        continue;
+
+                    SourceDto sourceDto = new SourceDto();
+                    sourceDto.setName(source.get("name").asText());
+                    sourceDto.setIcon(source.get("icon").asText());
+
+                    Set<CreatorDto> creatorDtoList = new HashSet<>();
+
+                    for(JsonNode creator:source.path("authors")){
+                        CreatorDto creatorDto = new CreatorDto(creator.asText());
+                        creatorDtoList.add(creatorDto);
+                    }
+
+                    ArticleDto articleDto = new ArticleDto();
+
+                    articleDto.setTitle(currentArticle.path("title").asText());
+                    articleDto.setArticleUrl(currentArticle.path("link").asText());
+                    articleDto.setImageUrl(currentArticle.path("thumbnail").asText());
+                    articleDto.setPublishDate(convertFromISOStringToSQLDate(
+                            currentArticle.path("iso_date").asText()
+                    ));
+                    articleDto.setCategoryDto(categoryDto);
+                    articleDto.setSourceDto(sourceDto);
+                    articleDto.setCreatorsDto(creatorDtoList);
+
+                    kafkaTemplateArticle.send("article-topic", articleDto);
+                    articles.add(articleDto);
+                }
             }
         }catch (Exception e){
             System.err.println(e.getMessage());
         }
 
-        System.out.println("\n\nartciles scraped : \n\n" + articles + "\n\n");
+        System.out.println("\n\nartciles scraped : " + articles.size()+"\n\n" + articles + "\n\n");
         return articles;
     }
 
 
 
-    @Scheduled(initialDelay = 30000)
-    public List<BookDto> getBooks() {
-        List<BookDto> books = new ArrayList<>();
-        List<String> subjects = new ArrayList<>(Arrays.asList(
-                "java",
-                "webdevelopment",
-                "computerscience",
-                "ai",
-                "machinelearning",
-                "cybersecurity"
-        ));
-
-        subjects.forEach(subject -> {
-            Integer booksCounter = 0;
-
-            try {
-                String url =  bookUrl + subject;
-                String response = restTemplate.getForObject(url, String.class);
-
-                JsonNode root = mapper.readTree(response);
-                JsonNode booksResult = root.path("items");
-
-                for(JsonNode currentBook:booksResult){
-
-                    JsonNode bookInfos = currentBook.path("volumeInfo");
-
-                    BookDto newBook = new BookDto(
-                            bookInfos.path("title").asText(),
-                            bookInfos.path("authors").get(0).asText(),
-                            bookInfos.path("publisher").asText(),
-                            bookInfos.path("description").asText(),
-                            bookInfos.path("publishedDate").asText(),
-                            bookInfos.path("categories").get(0).asText(),
-                            bookInfos.path("imageLinks").path("thumbnail").asText(),
-                            bookInfos.path("previewLink").asText()
-                    );
-
-
-                    if(++booksCounter > maxBooksBySubject)
-                        break;
-
-                    kafkaTemplateBook.send("book-topic", newBook);
-                    books.add(newBook);
-                }
-            }catch (Exception e){
-                System.err.println(e.getMessage());
-            }
-        });
-
-
-        System.out.println("\n\nbooks scraped : \n\n" + books + "\n\n");
-        return books;
+    public Date convertFromISOStringToSQLDate(String isoString){
+        Instant instantDate = Instant.parse(isoString);
+        LocalDate localDate = instantDate.atZone(ZoneId.systemDefault()).toLocalDate();
+        return Date.valueOf(localDate);
     }
+
 
 }

@@ -1,5 +1,6 @@
 package com.example.authservice.service;
 
+import com.example.authservice.dto.UserInfo;
 import com.example.authservice.entity.User;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -15,9 +16,10 @@ public class JwtService {
     private final String SecretKey = System.getenv("JWT_SECRET_KEY");
     private final long ExpirationTime = (long) (1000 * 60 * 120);
 
-    public String generateToken(User user) {
+    public String generateToken(UserInfo userInfo) {
         return Jwts.builder()
-                .setSubject(user.getUsername())
+                .setSubject(String.valueOf(userInfo.getIdUser()))
+                .claim("username", userInfo.getUsername())
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + ExpirationTime))
                 .signWith(Keys.hmacShaKeyFor(SecretKey.getBytes()), SignatureAlgorithm.HS256)
