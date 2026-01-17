@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import type { User } from "../models/interfaces";
 
@@ -102,6 +102,17 @@ export default function Connexion(){
             setAuthentificationError("Network problem, try again!");
         }
     }
+
+
+    useEffect(() => {
+        const token = localStorage.getItem("token");
+        const currentUser = localStorage.getItem("loggedUser");
+
+        if(token && currentUser){
+            localStorage.removeItem("token");
+            localStorage.removeItem("loggedUser");
+        }
+    },[])
 
 
     return (

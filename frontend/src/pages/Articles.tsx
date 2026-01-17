@@ -46,7 +46,8 @@ export default function Articles() {
             const result = await response.json();
 
             if(result.articles !== undefined){
-                setArticles(shuffle(result.articles));
+                const articles = shuffle(result.articles);
+                setArticles(articles);
                 setArticlesPrepared(true);
             }
 

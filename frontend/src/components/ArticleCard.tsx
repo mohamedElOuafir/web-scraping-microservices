@@ -28,15 +28,19 @@ export default function ArticleCard({ article, isFavorite, onAddFavorite, onRemo
     const [imageError, setImageError] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
 
-    const handleFavoriteClick = (e: React.MouseEvent) => {
+    const handleFavoriteClick = async (e: React.MouseEvent) => {
         e.stopPropagation();
         setIsLoading(true);
+        try{
+            if(isFavorite)
+                await onRemoveFavorite(article)
+            else 
+                await onAddFavorite(article);
+        }finally{
+            setIsLoading(false);
+        }
 
-        if(isFavorite)
-            onRemoveFavorite(article)
-        else 
-            onAddFavorite(article);
-        setIsLoading(false);
+        
     };
 
     const handleShare = (e: React.MouseEvent) => {
@@ -146,8 +150,11 @@ export default function ArticleCard({ article, isFavorite, onAddFavorite, onRemo
                 {/* Source Bar */}
                 <div className="flex items-center justify-between mb-4 pb-3 border-b border-gray-100">
                     <div className="flex items-center gap-2.5">
-                        <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-emerald-500 rounded-lg flex items-center justify-center shadow-sm">
+                        {/*<div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-emerald-500 rounded-lg flex items-center justify-center shadow-sm">
                             <Building2 className="w-4 h-4 text-white" />
+                        </div>*/}
+                        <div className="w-8 h-8  rounded-lg flex items-center justify-center shadow-sm">
+                            <img src={article.source.icon} />
                         </div>
                         <div>
                             <p className="text-xs text-gray-500 font-medium mb-0.5">Source</p>
