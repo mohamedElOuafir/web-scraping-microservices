@@ -13,10 +13,7 @@ import java.sql.Date;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 
 @Service
@@ -38,7 +35,7 @@ public class ScrapService {
     }
 
 
-    @Scheduled(fixedRate = 86400000, initialDelay = 30000)
+    @Scheduled(cron = "0 0 0 * * *")
     public List<ArticleDto> getArticles() {
         List<ArticleDto> articles = new ArrayList<>();
 
@@ -82,7 +79,6 @@ public class ScrapService {
                     articleDto.setSourceDto(sourceDto);
                     articleDto.setCreatorsDto(creatorDtoList);
 
-                    kafkaTemplateArticle.send("article-topic", articleDto);
                     articles.add(articleDto);
                 }
             }
@@ -90,7 +86,9 @@ public class ScrapService {
             System.err.println(e.getMessage());
         }
 
+        sendingArticles(articles);
         System.out.println("\n\nartciles scraped : " + articles.size()+"\n\n" + articles + "\n\n");
+
         return articles;
     }
 
@@ -102,5 +100,14 @@ public class ScrapService {
         return Date.valueOf(localDate);
     }
 
+
+    public void sendingArticles(List<ArticleDto> articles) {
+        Collections.shuffle(articles);
+
+        //l'envoie des articles au service de messagerie une par une:
+        articles.forEach(article -> {
+            kafkaTemplateArticle.send("article-topic", article);
+        });
+    }
 
 }

@@ -6,7 +6,7 @@ services:
     container_name: backend-kafka
     environment:
       KAFKA_BROKER_ID: 1
-      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ZOOKEEPER_CONNECT: backend-zookeeper:2181
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
       KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,PLAINTEXT_HOST://0.0.0.0:29092
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://backend-kafka:9092,PLAINTEXT_HOST://localhost:29092
@@ -37,7 +37,7 @@ services:
     container_name: backend-mysql
     image: mysql
     environment:
-      MYSQL_ROOT_PASSWORD: admin
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
     ports:
       - "3306:3306"
     healthcheck:
@@ -51,39 +51,6 @@ services:
       - web-scraping-micro-network
 
 
-  mongo:
-    container_name: backend-mongodb
-    image: mongo
-    restart: unless-stopped
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: root
-      MONGO_INITDB_ROOT_PASSWORD: admin
-    ports:
-      - "27017:27017"
-    volumes:
-      - mongodb_data:/data/db
-    networks:
-      - web-scraping-micro-network
-
-  mongo-express:
-    image: mongo-express:latest
-    container_name: backend-mongo-express
-    restart: unless-stopped
-    ports:
-      - "7080:8081"
-    environment:
-      ME_CONFIG_MONGODB_ADMINUSERNAME: root
-      ME_CONFIG_MONGODB_ADMINPASSWORD: admin
-      ME_CONFIG_MONGODB_SERVER: mongo
-      ME_CONFIG_BASICAUTH_USERNAME: admin
-      ME_CONFIG_BASICAUTH_PASSWORD: admin
-
-    networks:
-      - web-scraping-micro-network
-    depends_on:
-      - mongo
-
-
   discovery-service:
     build: ./discovery-service
     container_name: backend-discovery-service
@@ -91,6 +58,62 @@ services:
       - "8761:8761"
     networks:
       - web-scraping-micro-network
+
+  api-gateway-service:
+    build: ./api-gateway-service
+    env_file:
+      - ./api-gateway-service/.env
+    container_name: backend-api-gateway-service
+    ports:
+      - "8080:8080"
+    networks:
+      - web-scraping-micro-network
+    depends_on:
+      - discovery-service
+
+
+  article-service:
+    build: ./article-service
+    env_file:
+      - ./article-service/.env
+    container_name: backend-article-service
+    ports:
+      - "8083:8083"
+    networks:
+      - web-scraping-micro-network
+    depends_on:
+      - discovery-service
+      - kafka
+      - mysql
+
+
+  auth-service:
+    build: ./auth-service
+    env_file:
+      - ./auth-service/.env
+    container_name: backend-auth-service
+    ports:
+      - "8081:8081"
+    networks:
+      - web-scraping-micro-network
+    depends_on:
+      - discovery-service
+      - mysql
+
+
+  scrap-service:
+    build: ./scrap-service
+    env_file:
+      - ./scrap-service/.env
+    container_name: backend-scrap-service
+    ports:
+      - "8082:8082"
+    networks:
+      - web-scraping-micro-network
+    depends_on:
+      - kafka
+      - discovery-service
+
 
 
 volumes:

@@ -3,10 +3,12 @@ package com.example.articleservice.controller;
 
 import com.example.articleservice.entity.Article;
 import com.example.articleservice.service.ArticleService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -20,11 +22,27 @@ public class ArticleController {
         this.articleService = articleService;
     }
 
-    @GetMapping("/all")
-    public ResponseEntity<?> getAllArticles() {
-        List<Article> articles = articleService.getArticles();
+
+    @GetMapping("/stats")
+    public ResponseEntity<?> getArticlesStats(){
         return ResponseEntity.ok().body(
-                Map.of("articles", articles)
+                Map.of(
+                        "articles_stats" ,articleService.getArticlesStats()
+                ));
+    }
+
+
+    @GetMapping("/all/{page}")
+    public ResponseEntity<?> getAllArticles(@PathVariable("page") int page) {
+        Pageable pageable = PageRequest.of(page, 10);
+        Page<Article> articles = articleService.getArticles(pageable);
+        Long total = articles.getTotalElements();
+
+        return ResponseEntity.ok().body(
+                Map.of(
+                        "articles", articles,
+                        "total", total
+                )
         );
     }
 

@@ -4,18 +4,21 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>com.scraping</groupId>
-        <artifactId>backend</artifactId>
-        <version>1.0.0</version>
-        <relativePath>../pom.xml</relativePath>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.2.5</version>
+        <relativePath/>
     </parent>
 
+    <groupId>com.scraping</groupId>
     <artifactId>api-gateway-service</artifactId>
     <version>1.0.0</version>
     <name>api-gateway-service</name>
     <description>gateway service to route for all other microservices</description>
 
     <properties>
+        <java.version>17</java.version>
+        <spring-cloud.version>2023.0.1</spring-cloud.version>
         <jjwt.version>0.12.5</jjwt.version>
     </properties>
 

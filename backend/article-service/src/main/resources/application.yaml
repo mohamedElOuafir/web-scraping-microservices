@@ -3,11 +3,11 @@ spring:
     name: article-service
 
   datasource:
-    url: jdbc:mysql://localhost:3306/article_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&autoReconnect=true
-    username: root
-    password: admin
+    url: ${ARTICLE_DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
     hikari:
-      connection-timeout: 30000
+      connection-timeout: 60000
 
 
   jpa:
@@ -28,7 +28,7 @@ spring:
         spring.json.trusted.packages: "*"
         spring.json.value.default.type: "com.example.articleservice.dto.ArticleDto"
         spring.json.use.type.headers: false
-    bootstrap-servers: localhost:29092
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVER}
 
 
 eureka:
@@ -36,7 +36,7 @@ eureka:
     fetch-registry: true
     register-with-eureka: true
     service-url:
-      defaultZone: http://localhost:8761/eureka
+      defaultZone: ${EUREKA_CLIENT_SERVICE_URL}
 
 server:
   port: 8083

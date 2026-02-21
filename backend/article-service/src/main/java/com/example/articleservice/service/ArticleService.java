@@ -6,14 +6,17 @@ import com.example.articleservice.entity.*;
 import com.example.articleservice.exceptions.InvalidArticleFormatException;
 import com.example.articleservice.exceptions.InvalidFavoriteArticleException;
 import com.example.articleservice.repository.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.sql.Date;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.*;
 
 @Service
 public class ArticleService {
@@ -34,8 +37,40 @@ public class ArticleService {
     }
 
 
-    public List<Article> getArticles() {
-        return articleRepository.findAll();
+    public Page<Article> getArticles(Pageable pageable) {
+        return articleRepository.findAll(pageable);
+    }
+
+
+    public ArticlesStats getArticlesStats() {
+        ArticlesStats articlesStats = new ArticlesStats();
+        List<CategoryDto> categories = new ArrayList<>();
+        List<SourceDto> sources = new ArrayList<>();
+        Long todaysArticlesCount = 0L;
+
+        articlesStats.setTotalArticles(articleRepository.count());
+        articlesStats.setTotalCreators(creatorRepository.count());
+        articlesStats.setNumberSources(sourceRepository.count());
+
+        // Calculons le nombre d'articles d'aujourd'hui
+        for(Article article : articleRepository.findAll()) {
+            if(article.getPublishDate().toLocalDate().getDayOfMonth() == LocalDate.now().getDayOfMonth()) {
+                todaysArticlesCount++;
+            }
+        }
+        articlesStats.setTodayArticles(todaysArticlesCount);
+
+        // Recupérrons tous les categories et les 10 meilleurs sources!
+        List<CategoryDistribution> categoriesDistribution = articleRepository.findCategoryDistribution();
+        List<SourceDistribution> sourceDistributions = articleRepository.findTop10Source();
+
+        articlesStats.setCategories(categoriesDistribution);
+        articlesStats.setTop10Sources(sourceDistributions);
+
+        System.out.println(articlesStats);
+
+        return articlesStats;
+
     }
 
 
@@ -90,6 +125,13 @@ public class ArticleService {
 
         articleRepository.save(article);
 
+    }
+
+
+    @Scheduled(cron = "0 0 0 * * *")
+    public void deleteOldArticles(){
+        List<Long> articles = favoriteRepository.findAllArticlesId();
+        articleRepository.deleteOldArticles(articles, Date.valueOf(LocalDate.now().minusDays(7)));
     }
 
 

@@ -37,7 +37,7 @@ public class Article {
     @JoinColumn(name = "category_id")
     private Category category;
 
-    @ManyToMany
+    @ManyToMany(cascade = CascadeType.REMOVE)
     @JoinTable(
             name = "article_creator",
             joinColumns = @JoinColumn(name = "article_id"),
